@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+.loader-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 1rem; 
+}
+
+.loader {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    position: relative;
+    animation: rotate 1s linear infinite;
+}
+
+.loader::before {
+    content: "";
+    box-sizing: border-box;
+    position: absolute;
+    inset: 0px;
+    border-radius: 50%;
+    border: 5px solid #FFF;
+    animation: prixClipFix 2s linear infinite;
+}
+
+@keyframes rotate {
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes prixClipFix {
+    0% { clip-path: polygon(50% 50%,0 0,0 0,0 0,0 0,0 0); }
+    25% { clip-path: polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0); }
+    50% { clip-path: polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%); }
+    75% { clip-path: polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%); }
+    100% { clip-path: polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0); }
+}
+
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-110 text-center border border-gray-700">
+        <h1 class="text-3xl font-bold mb-4 text-blue-400">URL Shortener</h1>
+        <input id="urlInput" type="text" placeholder="Enter your URL" 
+               class="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+        <button onclick="shortenUrl()" 
+                class="w-full bg-blue-500 hover:bg-blue-600 transition text-white p-3 rounded-lg font-semibold">Shorten URL</button>
+        
+                <div id="loader" class="loader-container hidden">
+                    <div class="loader"></div>
+                </div>
+        
+        <div id="shortenedUrlBox" class="mt-4 hidden bg-gray-700 p-3 rounded-lg border border-gray-600 flex justify-between items-center">
+            <a id="shortenedUrl" href="#" target="_blank" class="text-green-400 underline"></a>
+            <button onclick="copyToClipboard()" class="bg-blue-500 hover:bg-blue-600 transition text-white px-3 py-1 rounded-lg">Copy</button>
+        </div>
+    </div>
+    
+    <script>
+        async function shortenUrl() {
+            const urlInput = document.getElementById("urlInput").value;
+            const loader = document.getElementById("loader");
+            const shortenedUrlBox = document.getElementById("shortenedUrlBox");
+            const shortenedUrl = document.getElementById("shortenedUrl");
+            
+            loader.classList.remove("hidden");
+            shortenedUrlBox.classList.add("hidden");
+            
+            try {
+                const response = await fetch("http://localhost:8080/shorten", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url: urlInput })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    shortenedUrl.href = data.short_url;
+                    shortenedUrl.innerText = data.short_url;
+                    shortenedUrlBox.classList.remove("hidden");
+                } else {
+                    alert("Error shortening URL");
+                }
+            } catch (error) {
+                alert("Failed to connect to server");
+            }
+            
+            loader.classList.add("hidden");
+        }
+        
+        function copyToClipboard() {
+    const shortenedUrl = document.getElementById("shortenedUrl");
+
+    const range = document.createRange();
+    range.selectNode(shortenedUrl);
+    window.getSelection().removeAllRanges(); 
+    window.getSelection().addRange(range); 
+    navigator.clipboard.writeText(shortenedUrl.href);
+    setTimeout(() => {
+        window.getSelection().removeAllRanges();
+    }, 2000);
+}
+
+    </script>
+</body>
+</html>
